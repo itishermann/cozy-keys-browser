@@ -34,6 +34,7 @@ var menuCtrler = {
 /* --------------------------------------------------------------------- */
 // GLOBALS
 var menuEl,
+    menuIframe,
     popperInstance,
     targetsEl = [],  // fields where a menu has been configured
     formsEl = [],    // store all parent forms of fields where a menu has been added (ie forms of targetsEl)
@@ -117,10 +118,12 @@ function _initInPageMenuForEl(targetEl) {
 
 	if(!state.isMenuInited) {
         // menu is not yet initiated, there is no iframe elemeent for the menu, create one
-        menuEl = document.createElement('iframe')
+        menuEl = document.createElement('dialog')
+        menuIframe = document.createElement('iframe')
         _setIframeURL(state.currentMenuType, state.isPinLocked )
         menuEl.id  = 'cozy-menu-in-page'
         menuEl.style.cssText = 'z-index: 2147483647 !important; border:0; transition: transform 30ms linear 0s; background-color: transparent; visibility: visible !important;'
+        menuIframe.style.cssText = 'border:0; background-color: transparent; visibility: visible !important; position: relative; width: 100%; height:100%; background-color: red;'
         // Append <style> element to add popperjs styles
         // relevant doc for css stylesheet manipulation : https://www.w3.org/wiki/Dynamic_style_-_manipulating_CSS_with_JavaScript
         const styleEl = document.createElement('style')
@@ -128,10 +131,12 @@ function _initInPageMenuForEl(targetEl) {
             #cozy-menu-in-page {display: none;}
             #cozy-menu-in-page[data-show] {display: block;}
             #cozy-menu-in-page[data-unvisible] {height: 1px !important; }
+            dialog::backdrop {display : none;}
         `;
         document.head.appendChild(styleEl)
         // append element and configure popperjs
         document.body.append(menuEl)
+        menuEl.append(menuIframe)
         const sameWidth = {
             name     : "sameWidth",
             enabled  : true,
@@ -185,19 +190,19 @@ function _initInPageMenuForEl(targetEl) {
 
 function _onBlur(event) {
     if (!event.isTrusted) return;
-    // console.log('Blur event in an input', event.target.id)
-    menuCtrler.hide()
+    console.log('Blur event in an input', event.target.id)
+    // menuCtrler.hide()
     return true
 }
 
 function _onFocus(event) {
-    // console.log('focus event in an input', event.target.id);
+    console.log('focus event in an input', event.target.id);
     if (!event.isTrusted) return;
     show(this)
 }
 
 function _onClick(event) {
-    // console.log('click event in an input', event.target.id);
+    console.log('click event in an input', event.target.id);
     if (!event.isTrusted) return;
     show(this)
 }
@@ -247,12 +252,16 @@ function _onKeyDown(event) {
 /* --------------------------------------------------------------------- */
 //
 function show(targetEl) {
-    // console.log('menuCtrler.show() ');
+    console.log('menuCtrler.show() ');
     if (state.isFrozen) return
     state.lastFocusedEl = targetEl
     popperInstance.state.elements.reference = targetEl
     popperInstance.update()
     menuEl.setAttribute('data-show', '')
+    console.log('showModal()', menuEl.open);
+    if (!menuEl.open) {
+        menuEl.showModal()
+    }
     state.isHidden = false
     // find the first cipher to display
     selectFirstCipherToSuggestFor(targetEl)
@@ -281,7 +290,7 @@ function hide(force) {
         // but don't delay this execution, other wise the menu will still be displayed when the page details will be run
         // and there fore will consider fields under the iframe as being hidden. These fields would then not be filled...
         // console.log(`FORCE HIDE _ call id=0${n}`, state.lastFocusedEl, ); // usefull for debug...
-        if (document.activeElement === menuEl) {
+        if (document.activeElement === menuIframe) {
             // the focus is in the iframe.
             // When closing it, put focus back in the correct input in the page
             // but freeze the menu so that focus event doesn't open the menu again
@@ -418,7 +427,7 @@ menuCtrler.submit = submit
 
 
 /* --------------------------------------------------------------------- */
-// Set the height of menuEl (iframe) taking into account the inner margin
+// Set the height of menuEl taking into account the inner margin
 function setHeight(h) {
     if (!state.isMenuInited) return // happens if in an iframe without relevant inputs for the menu
     if (state.lastHeight === h )  return
@@ -506,16 +515,16 @@ function _setIframeURL(menuType, isPinLocked) {
     if (!menuEl) return
     let hash = '';
     const rand = '?' + Math.floor((Math.random()*1000000)+1)
-    if (menuEl.src) {
-        const location = new URL(menuEl.src)
+    if (menuIframe.src) {
+        const location = new URL(menuIframe.src)
         hash = location.hash
     }
     if (menuType === 'autofillMenu') {
-        menuEl.src = chrome.runtime.getURL('inPageMenu/menu.html' + rand)  + hash
+        menuIframe.src = chrome.runtime.getURL('inPageMenu/menu.html' + rand)  + hash
     } else if (menuType === 'loginMenu') {
         let urlParams = ''
         if (isPinLocked) urlParams = '?isPinLocked=true'
-        menuEl.src = chrome.runtime.getURL('inPageMenu/loginMenu.html' + urlParams + rand) + hash
+        menuIframe.src = chrome.runtime.getURL('inPageMenu/loginMenu.html' + urlParams + rand) + hash
     }
 }
 
@@ -523,25 +532,25 @@ function _setIframeURL(menuType, isPinLocked) {
 /* --------------------------------------------------------------------- */
 // just modify the random part of the iframe url in order to force refresh
 function _forceIframeRefresh() {
-    if (!menuEl || !menuEl.src) return
-    const url = new URL(menuEl.src)
+    if (!menuIframe || !menuIframe.src) return
+    const url = new URL(menuIframe.src)
     const rand = '?' + Math.floor((Math.random()*1000000)+1)
-    menuEl.src = url.origin + url.pathname + url.search + rand + url.hash
+    menuIframe.src = url.origin + url.pathname + url.search + rand + url.hash
 }
 
 
 /* --------------------------------------------------------------------- */
 //
 function _setApplyFadeInUrl(doApply, fieldTypes) {
-    if (!menuEl || !menuEl.src) return
-    const url = new URL(menuEl.src)
+    if (!menuIframe || !menuIframe.src) return
+    const url = new URL(menuIframe.src)
     if (doApply) {
         // console.log('menuCtrler.applyFadeIn()');
-        menuEl.src = url.origin + url.pathname + url.search + '#applyFadeIn*' + fieldTypes
+        menuIframe.src = url.origin + url.pathname + url.search + '#applyFadeIn*' + fieldTypes
     } else {
         // console.log('menuCtrler.removeFadeIn()');
-        const currentFieldTypes = menuEl.src.slice(menuEl.src.search(/\*.*/gi))
-        menuEl.src = url.origin + url.pathname + url.search + '#dontApplyFadeIn' + currentFieldTypes
+        const currentFieldTypes = menuIframe.src.slice(menuIframe.src.search(/\*.*/gi))
+        menuIframe.src = url.origin + url.pathname + url.search + '#dontApplyFadeIn' + currentFieldTypes
     }
 }
 

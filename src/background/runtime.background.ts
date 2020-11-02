@@ -82,6 +82,12 @@ export default class RuntimeBackground {
             'full.sender': sender,
         });
         */
+        console.log('runtime.background PROCESS MESSAGE ', {
+            'command:': msg.subcommand ? msg.subcommand : msg.command,
+            'sender': msg.sender + ' of ' + (new URL('https://www.etam.com/')).host + ' frameId:' + sender.frameId,
+            'full.msg': msg,
+            'full.sender': sender,
+        });
 
         switch (msg.command) {
             case 'loggedIn':

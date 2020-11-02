@@ -1104,6 +1104,13 @@ import menuCtrler from './menuCtrler';
             "heard in": document.location.pathname
         });
         */
+        console.log('autofil.js HEARD : ', {
+            'command': msg.command,
+            'subcommand': msg.subcommand,
+            'sender': sender.url ? new URL(sender.url).pathname : sender,
+            "msg": msg,
+            "heard in": document.location.pathname
+        });
 
 
        if (msg.command === 'notificationBarPageDetails') return
