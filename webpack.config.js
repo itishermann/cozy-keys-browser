@@ -97,6 +97,11 @@ const plugins = [
         filename: 'inPageMenu/loginMenu.html',
         chunks: ['inPageMenu/loginMenu']
     }),
+    new HtmlWebpackPlugin({
+        template: './src/inPageMenu/feedbacks.html',
+        filename: 'inPageMenu/feedbacks.html',
+        chunks: ['inPageMenu/feedbacks']
+    }),
     new CopyWebpackPlugin([
         './src/manifest.json',
         { from: './src/_locales', to: '_locales' },
@@ -154,6 +159,7 @@ const config = {
         'notification/bar': './src/notification/bar.js',
         'inPageMenu/menu': './src/inPageMenu/menu.js',
         'inPageMenu/loginMenu': './src/inPageMenu/loginMenu.js',
+        'inPageMenu/feedbacks': './src/inPageMenu/feedbacks.js',
     },
     optimization: {
         minimize: ENV === 'production',

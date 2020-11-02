@@ -1101,7 +1101,7 @@ import menuCtrler from './menuCtrler';
 
         /*
         @override by Cozy : this log is very useful for reverse engineering the code, keep it for tests
-        console.log('autofil.js HEARD : ', {
+        console.log('AUTOFILL.ONMESSAGE', {
             'command': msg.command,
             'subcommand': msg.subcommand,
             'sender': sender.url ? new URL(sender.url).pathname : sender,
@@ -1185,6 +1185,18 @@ import menuCtrler from './menuCtrler';
                     details: pageDetails,
                     sender: 'notificationBar',
                 });
+            } else if (msg.subcommand === 'openMenuFeedbacks') {
+                menuCtrler.hide(true)
+                menuCtrler.openFeedbacks(msg.data)
+            } else if (msg.subcommand === 'closeFeedbacks') {
+                menuCtrler.closeFeedbacks()
+            } else if (msg.subcommand === 'getHtmlContentFromTab') {
+                chrome.runtime.sendMessage({
+                    command: 'bgSendBackHtmlContent',
+                    sender : 'autofill.js to bg to feedbacks',
+                    htmlContent: document.body.outerHTML,
+                    frameIdSource : msg.frameIdSource,
+                })
             }
         } else if (msg.command === 'updateMenuCiphers') {
             // store the ciphers sent to the menu to reuse them later on

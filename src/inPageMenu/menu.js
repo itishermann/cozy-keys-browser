@@ -49,9 +49,10 @@ const idsRowTemplate = `
 document.addEventListener('DOMContentLoaded', () => {
 
     // 1- get elements references
-    panel = document.querySelector('.panel')
-    arrow = document.getElementById('arrow')
-    titleEl = document.getElementById('title-content')
+    panel     = document.querySelector('.panel')
+    arrow     = document.getElementById('arrow')
+    titleEl   = document.getElementById('title-content')
+    feedbacks = document.getElementById('feedbacksText')
 
     // 2- prepare i18n and apply
     var i18n = {};
@@ -74,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lang = chrome.i18n.getUILanguage();
         i18nGetMessage = chrome.i18n.getMessage
         titleEl.textContent = i18nGetMessage('inPageMenuSelectAnAccount')
+        feedbacks.textContent = 'Contribuer à améliorer les propositions'
     }
 
     // 3- listen to the commands and ciphers sent by the addon
@@ -164,7 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     })
 
-    // 7- detect when to apply the fadeIn effect
+    // 7- listen to click on the feedbacks
+    feedbacks.addEventListener('click',(e)=>{
+        chrome.runtime.sendMessage({
+            command   : 'bgAnswerMenuRequest',
+            subcommand: 'openMenuFeedbacks'  ,
+            sender    : 'menu.js'            ,
+        });
+    })
+
+    // 8- detect when to apply the fadeIn effect
     window.addEventListener('hashchange', _testHash)
     _testHash()
 

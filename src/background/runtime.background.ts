@@ -217,10 +217,44 @@ export default class RuntimeBackground {
                             frameTargetId : sender.frameId            ,
                         });
                         break;
+                    case 'openMenuFeedbacks':
+                        const isAuthenticated = await this.userService.isAuthenticated(); // = connected or installed
+                        const isLocked        = await this.vaultTimeoutService.isLocked();
+                        //    if  isAuthenticated == false  &  isLocked == true   => loggedout
+                        //    if  isAuthenticated == true   &  isLocked == true   => locked
+                        //    if  isAuthenticated == true   &  isLocked == false  => logged in
+                        const data = {
+                            url         : sender.tab.url,
+                            cozyUrl     : await this.storageService.get<string>('rememberedCozyUrl'),
+                            version     : chrome.runtime.getManifest().version,
+                            addonStatus : (isAuthenticated === true && isLocked === false) ? 'connected' : 'logged out',
+                        };
+                        await BrowserApi.tabSendMessage(sender.tab, {
+                            command    : 'autofillAnswerRequest',
+                            subcommand : 'openMenuFeedbacks',
+                            data       : data,
+                        }); // don't add the frameId, since the emiter (menu) is not the target...
+                        break;
+                    case 'closeFeedbacks':
+                        await BrowserApi.tabSendMessage(sender.tab, {
+                            command    : 'autofillAnswerRequest',
+                            subcommand : 'closeFeedbacks',
+                        }); // don't add the frameId, since the emiter (menu) is not the target...
+                        break;
+                    case 'getHtmlContentFromTab':
+                        // console.log("getHtmlContentFromTab  ! ! ! ! !");
+                        await BrowserApi.tabSendMessage(
+                            sender.tab,
+                            {
+                                command       : 'autofillAnswerRequest',
+                                subcommand    : 'getHtmlContentFromTab',
+                                frameIdSource : sender.frameId,
+                            },
+                            {frameId: 0}
+                        );
+                        break;
                 }
                 break;
-            case 'bgGetCiphersForTab':
-
             case 'bgAddLogin':
                 await this.addLogin(msg.login, sender.tab);
                 break;
@@ -269,6 +303,13 @@ export default class RuntimeBackground {
                     isPinLocked               : isPinLocked,
                     frameId                   : sender.frameId,
                 }, {frameId: sender.frameId});
+                break;
+            case 'bgSendBackHtmlContent':
+                await BrowserApi.tabSendMessage(sender.tab, {
+                    command     : 'feedbacksAnswerRequest',
+                    subcommand  : 'setHtmlContent',
+                    htmlContent : msg.htmlContent,
+                }, {frameId: msg.frameIdSource});
                 break;
             case 'bgGetAutofillMenuScript':
                 // If goes here : means that addon has just been connected (page was already loaded)

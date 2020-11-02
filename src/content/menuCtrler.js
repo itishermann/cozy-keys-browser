@@ -34,6 +34,7 @@ var menuCtrler = {
 /* --------------------------------------------------------------------- */
 // GLOBALS
 var menuEl,
+    feedbacksEl,
     popperInstance,
     ciphers ,        // linked list of ciphers to suggest in the menu
     ciphersById;     // a dictionnary of cyphers to suggest in the menu by id : {idCipher:cipher, ...}
@@ -63,6 +64,64 @@ const
     //    * https://codepen.io/tigt/post/optimizing-svgs-in-data-uris
     //    * https://www.npmjs.com/package/mini-svg-data-uri
     minMenuWidth = 210 ;
+
+const feedbacksCss = `
+z-index: 2147483647 !important;
+border:0;
+transition: transform 30ms linear 0s;
+background-color: transparent;
+visibility: visible !important;
+margin:0;
+position: absolute;
+top: 0;
+left: 0;
+height: 100%;
+width: 100%;
+`
+
+/*
+lastpass put its iframe in a div with the following inlined style :
+
+style="position: absolute !important;
+z-index: 2147483647 !important;
+display: block !important;
+width: 330px !important;
+height: 356px !important;
+opacity: 1 !important;
+visibility: visible !important;
+transform: none !important;
+clip: auto !important;
+clip-path: none !important;
+filter: none !important;
+mask: none !important;
+top: 191.9px !important;
+left: 904.1px !important;"
+
+*/
+const testWrapperCss = `
+position: fixed !important;
+z-index: 2147483647 !important;
+display: block !important;
+width: 330px !important;
+opacity: 1 !important;
+visibility: visible !important;
+transform: none !important;
+clip: auto !important;
+clip-path: none !important;
+filter: none !important;
+mask: none !important;
+
+border:0 !important;
+margin:0 !important;
+
+top: 0 !important;
+left: 0 !important;
+height: 100% !important;
+width: 100% !important;
+background-color: transparent !important;
+`
+
+
 
 /* --------------------------------------------------------------------- */
 // Add a menu button to an element and initialize the iframe for the menu
@@ -95,6 +154,15 @@ menuCtrler.addMenuButton = addMenuButton
 /* --------------------------------------------------------------------- */
 // Init a target element to be able to trigger the menu
 function _initInPageMenuForEl(targetEl) {
+
+    // BJA FOR TESTS
+    openFeedbacks({
+        url     : 'url de test',
+        cozyUrl : 'cozyRrl de test',
+        version : 'version addon de test',
+    })
+    // END BJA
+
     // register this element as one of the targets for the menu
     targetsEl.push(targetEl)
 
@@ -289,7 +357,7 @@ function _onKeyDown(event) {
 /* --------------------------------------------------------------------- */
 //
 function show(targetEl) {
-    // console.log('menuCtrler.show() ');
+    // console.log('menuCtrler.show()', {isFrozen:state.isFrozen});
     if (state.isFrozen) return
     if (!state.isHidden && (state.lastFocusedEl === targetEl)) return
     state.lastFocusedEl = targetEl
@@ -649,6 +717,31 @@ function setHostFrameId(frameId) {
 }
 menuCtrler.setHostFrameId = setHostFrameId
 
+
+/* --------------------------------------------------------------------- */
+//
+function openFeedbacks(data){
+    if (feedbacksEl) return
+    setTimeout(menuCtrler.freeze, 610)
+    feedbacksEl = document.createElement('iframe')
+    feedbacksEl.src = chrome.runtime.getURL('inPageMenu/feedbacks.html?' +  encodeURI(JSON.stringify(data)) )
+    feedbacksEl.id  = 'cozy-feedbacks'
+    feedbacksEl.style.cssText = feedbacksCss
+    // append feedbacks element
+    document.body.append(feedbacksEl)
+}
+menuCtrler.openFeedbacks = openFeedbacks
+
+
+/* --------------------------------------------------------------------- */
+//
+function closeFeedbacks(){
+    if (!feedbacksEl) return
+    menuCtrler.unFreeze()
+    document.body.removeChild(feedbacksEl)
+    feedbacksEl = null
+}
+menuCtrler.closeFeedbacks = closeFeedbacks
 
 /* --------------------------------------------------------------------- */
 // EXPORT
