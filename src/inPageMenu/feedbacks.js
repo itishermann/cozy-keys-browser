@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lang = chrome.i18n.getUILanguage();
         i18nGetMessage = chrome.i18n.getMessage
         titleEl.textContent = 'Participez à améliorer les suggestions automatiques de Cozy Pass' // i18nGetMessage('inPageMenuSelectAnAccount')
-        intro.textContent = `L'algorithme qui décide où placer le menu et quelles propositions faire a besoin de vous ! Partagez nous les cas de figure que vous rencontrez pour qu'il apprenne et s'amaliore.` // i18nGetMessage('inPageMenuSelectAnAccount')
+        intro.innerHTML = `L'algorithme qui place le menu et fait des propositions a besoin de vous !<br>Partagez nous les cas de figure que vous rencontrez pour qu'il apprenne et s'amaliore.` // i18nGetMessage('inPageMenuSelectAnAccount')
         userText = `
 Bonjour Claude,
 
@@ -77,12 +77,12 @@ Info complémentaires :
             })
             .join('')
         feedbacks.textContent = userText
-        addHtmlLabel.textContent = `Inclure le code de la page (important si la page n'est pas publiques, les données de formulaires ne sont elles pas envoyées)`
+        addHtmlLabel.textContent = `Inclure le code de la page (important si la page n'est pas publique)`
         note.textContent = `note : seul le texte ci dessus sera envoyé.`
         btn.textContent = `Envoyer vos remarques`
     }
 
-    // 3-
+    // 3- manage the addHtml checkbox
     addHtmlBtn.addEventListener('change', (e) => {
         if (e.target.checked) {
             requestHtmlContent()
@@ -92,13 +92,13 @@ Info complémentaires :
             feedbacks.value = nexTxt.endsWith('\n') ? nexTxt.slice(0,-1) : nexTxt ;
         }
     })
-    requestHtmlContent()
+    // requestHtmlContent()
 
     // 4- listen to click on the close menu button
     const closeIcon = document.querySelector('.close-icon')
     closeIcon.addEventListener('click', close )
 
-    // 5- activate face-in
+    // 5- activate fade-in
     panel.style.transformOrigin = 'calc(50%) 0'
     panel.classList.add('fade-in')
 

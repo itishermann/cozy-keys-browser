@@ -50,14 +50,14 @@ body {
     width: 100%;
     max-width: 50em;
     height: 100%;
-    max-height: 50em;
+    max-height: 55em;
     display: flex;
     flex-direction: column;
 }
 
 
 #header {
-    padding: 0 1rem 0 1rem;
+    padding: 1rem 1rem 0 1rem;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
@@ -98,9 +98,20 @@ body {
     resize: none;
 }
 
-.btn-container {
-    width: 100%;
-    padding: 1em;
+#addHtmlContainer {
+    margin: 1em;
+}
+
+#intro {
+    margin: 1em;
+}
+
+#note {
+    margin: 1em;
+}
+
+#btn-container {
+    margin: 1em;
 }
 
 #addHtmlContainer {
@@ -132,96 +143,6 @@ button {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-.rows-list {
-    padding: 0 1rem 1rem 1rem;
-    color: #393e48;
-}
-
-.row-main {
-    display: flex;
-    align-items: center;
-    flex-grow: 1;
-    min-width: 0;
-    padding: 0.875rem 0 0.875rem 1rem;
-    background-color: white;
-    border-bottom: #d6d8da 1.5px solid;
-    overflow: hidden;
-    &.selected {
-        background-color: #ddebff;
-    }
-    &:hover{
-        cursor: pointer;
-        background-color: #c4dcfd;
-    }
-    &:first-child {
-        border-top-left-radius: 0.5rem;
-        border-top-right-radius: 0.5rem;
-    }
-    &:last-child {
-        border-bottom-right-radius: 0.5rem;
-        border-bottom-left-radius: 0.5rem;
-        border-bottom: 0;
-    }
-}
-
-.row-icon {
-    width: 2rem;
-    height: 2rem;
-    padding-top: 0.125rem;
-    padding-bottom: 0.125rem;
-    margin-right: 1rem;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex-shrink: 0;
-}
-
-.icon-login {
-    background-image: url(./images/icons-login.svg);
-}
-
-.icon-card {
-    background-image: url(./images/icons-card.svg);
-}
-
-.icon-identity {
-    background-image: url(./images/icons-identity.svg);
-}
-
-.row-text {
-    margin-top: 0.3rem;
-    display: block;
-    font-size: $font-size-large;
-}
-
-.row-detail {
-    display: block;
-    font-size: $font-size-small;
-    color: #95999d;
-    min-height: 5px;
-}
-
-.hidden {
-    display: none;
-}
-
 #feedbacks {
     padding: 0px 1rem 0.3rem 1rem;
     color: #a7c9f9;
@@ -241,6 +162,13 @@ button {
         text-overflow: ellipsis;
     }
 }
+
+
+
+
+
+
+
 
 @media (max-width: 300px) {
     #title-content{
