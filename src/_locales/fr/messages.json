@@ -870,6 +870,24 @@
   "inPageMenuSelectAnIdentity": {
     "message": "Sélectionner une identité"
   },
+  "inPageFeedbacksTitle": {
+    "message": "Participez à améliorer les suggestions automatiques de Cozy Pass"
+  },
+  "inPageFeedbacksAddHtmlLabel": {
+    "message": "Inclure le code de la page (important si la page n'est pas publique)"
+  },
+  "inPageFeedbacksNote": {
+    "message": "note : seul le texte ci dessus sera envoyé."
+  },
+  "inPageFeedbacksSubmitBtn": {
+    "message": "Envoyer vos remarques"
+  },
+  "inPageFeedbacksIntro": {
+    "message": "L'algorithme qui place le menu et fait des propositions a besoin de vous !<br>Partagez nous les cas de figure que vous rencontrez pour qu'il apprenne et s'amaliore."
+  },
+  "inPageFeedbacksUserText": {
+    "message": "Bonjour Cozy Claude,\n\nLe menu de Cozy Pass est fort pratique, mais en navigant sur le site :\n   > **url**\n\nje remarque que :\n  * le menu est proposé dans un champs non pertinent car...\n  * les propositions du menu ne sont pas adaptées car ...\n  * le menu n'apparait pas alors que ...\n\nJ'espère qu'avec ces informations vous allez trouver une solution et continuer à améliorer Cozy !\n\nSigné : l'utilisateur du cozy \"**cozyUrl**\"\n\nInfo techniques complémentaires :\n  * version de l'addon : **version**\n  * statut addon : **addonStatus**\n  * navigateur : **userAgent**"
+  },
   "experimentalFeature": {
     "message": "Ceci est actuellement une fonctionnalité expérimentale. À utiliser avec prudence."
   },

@@ -882,6 +882,24 @@
   "inPageMenuSelectAnIdentity": {
     "message": "Select an identity"
   },
+  "inPageFeedbacksTitle": {
+    "message": "Contribute to improve automatic suggestions of Cozy Pass"
+  },
+  "inPageFeedbacksAddHtmlLabel": {
+    "message": "Include the code of the page (important if the page is not public)"
+  },
+  "inPageFeedbacksNote": {
+    "message": "note : only the text above will be sent"
+  },
+  "inPageFeedbacksSubmitBtn": {
+    "message": "Send your feedbacks"
+  },
+  "inPageFeedbacksIntro": {
+    "message": "The algorithm in charge to display the menu and make suggestions needs you !<br>Send us your cases so that it trains and improves"
+  },
+  "inPageFeedbacksUserText": {
+    "message": "Hello Cozy Claude,\n\nThe menu of Cozy Pass is quite convenient, nevertheless while browsing on :\n> **url**\n\nI noticed that :\n  * the menu appears in an non relevant field because ...\n  * the suggestions do not match because ...\n  * the menu doesn't appear whereas ...\n\nI hope that with those information you will find a solution and continue to improve Cozy !\n\nSigned : the user of cozy \"**cozyUrl**\"\n\nComplementary technical informations :\n  * addon version : **version**\n  * addon"
+  },
   "experimentalFeature": {
     "message": "This is currently an experimental feature. Use at your own risk."
   },

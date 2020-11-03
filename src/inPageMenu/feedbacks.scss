@@ -96,18 +96,17 @@ body {
     margin: 1em;
     height: 100%;
     resize: none;
-}
-
-#addHtmlContainer {
-    margin: 1em;
+    padding: 0 0.5rem;
 }
 
 #intro {
     margin: 1em;
+    padding: 0 0.5rem;
 }
 
 #note {
     margin: 1em;
+    padding: 0 0.5rem;
 }
 
 #btn-container {
@@ -117,8 +116,12 @@ body {
 #addHtmlContainer {
     display: flex;
     align-items: center;
+    padding: 0 1.5em;
     & > label, input {
         cursor: pointer;
+    }
+    & > input {
+        margin-left: 0;
     }
 }
 

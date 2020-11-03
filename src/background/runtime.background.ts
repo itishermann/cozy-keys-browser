@@ -242,7 +242,6 @@ export default class RuntimeBackground {
                         }); // don't add the frameId, since the emiter (menu) is not the target...
                         break;
                     case 'getHtmlContentFromTab':
-                        // console.log("getHtmlContentFromTab  ! ! ! ! !");
                         await BrowserApi.tabSendMessage(
                             sender.tab,
                             {
@@ -250,7 +249,7 @@ export default class RuntimeBackground {
                                 subcommand    : 'getHtmlContentFromTab',
                                 frameIdSource : sender.frameId,
                             },
-                            {frameId: 0}
+                            {frameId: 0},
                         );
                         break;
                 }

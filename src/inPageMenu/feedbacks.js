@@ -42,30 +42,48 @@ document.addEventListener('DOMContentLoaded', () => {
         // retrieve i18n values and set elements textcontent
         lang = chrome.i18n.getUILanguage();
         i18nGetMessage = chrome.i18n.getMessage
-        titleEl.textContent = 'Participez à améliorer les suggestions automatiques de Cozy Pass' // i18nGetMessage('inPageMenuSelectAnAccount')
-        intro.innerHTML = `L'algorithme qui place le menu et fait des propositions a besoin de vous !<br>Partagez nous les cas de figure que vous rencontrez pour qu'il apprenne et s'amaliore.` // i18nGetMessage('inPageMenuSelectAnAccount')
-        userText = `
-Bonjour Claude,
+        titleEl.textContent = i18nGetMessage('inPageFeedbacksTitle')
+        intro.innerHTML = i18nGetMessage('inPageFeedbacksIntro')
+        userText = i18nGetMessage('inPageFeedbacksUserText')
 
-Le menu de Cozy Pass est fort pratique, mais en navigant sur le site :
-   > **url**
+        // Bonjour Cozy Claude,\n
+        // \n
+        // Le menu de Cozy Pass est fort pratique, mais en navigant sur le site :\n
+        //    > **url**\n
+        // \n
+        // je remarque que :\n
+        //   * le menu est proposé dans un champs non pertinent car...\n
+        //   * les propositions du menu ne sont pas adaptées car ...\n
+        //   * le menu n'apparait pas alors que ...\n
+        // \n
+        // J'espère qu'avec ces informations vous allez trouver une solution et continuer à améliorer Cozy !\n
+        // \n
+        // Signé : l'utilisateur du cozy "**cozyUrl**"\n
+        // \n
+        // Info techniques complémentaires :\n
+        //   * version de l'addon : **version**\n
+        //   * statut addon : **addonStatus**\n
+        //   * navigateur : **userAgent**\n
 
-je remarque que : [supprimer/compléter]
-  * le menu est proposé dans un champs non pertinent car...
-  * les propositions du menu ne sont pas adaptées car ...
-  * le menu n'apparait pas alors que ...
+        // Hello Cozy Claude,\n
+        // \n
+        // The menu of Cozy Pass is quite convenient, nevertheless while browsing on :\n
+        //    > **url**\n
+        // \n
+        // I noticed that :\n
+        //   * the menu appears in an non relevant field because ...\n
+        //   * the suggestions do not match because ...\n
+        //   * the menu doesn't appear whereas ...\n
+        // \n
+        // I hope that with those information you will find a solution and continue to improve Cozy !\n
+        // \n
+        // Signed : the user of cozy "**cozyUrl**"\n
+        // \n
+        // Complementary technical informations :\n
+        //   * addon version : **version**\n
+        //   * addon status : **addonStatus**\n
+        //   * browser : **userAgent**\n
 
-J'espère qu'avec ces informations vous allez trouver une solution et continuer à améliorer Cozy !
-
-Signé : l'utilisateur du cozy "**cozyUrl**"
-
-[laissez nous votre mail si vous voulez être informés de la suite]
-
-Info complémentaires :
-  * version de l'addon : **version**
-  * statut addon : **addonStatus**
-  * navigateur : **userAgent**
- `
         userText = userText
             .split('**')
             .map( s => {
@@ -77,9 +95,9 @@ Info complémentaires :
             })
             .join('')
         feedbacks.textContent = userText
-        addHtmlLabel.textContent = `Inclure le code de la page (important si la page n'est pas publique)`
-        note.textContent = `note : seul le texte ci dessus sera envoyé.`
-        btn.textContent = `Envoyer vos remarques`
+        addHtmlLabel.textContent = i18nGetMessage('inPageFeedbacksAddHtmlLabel')
+        note.textContent = i18nGetMessage('inPageFeedbacksNote')
+        btn.textContent = i18nGetMessage('inPageFeedbacksSubmitBtn')
     }
 
     // 3- manage the addHtml checkbox
