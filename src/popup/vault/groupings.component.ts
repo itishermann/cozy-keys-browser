@@ -29,12 +29,16 @@ import { StorageService } from 'jslib/abstractions/storage.service';
 import { SyncService } from 'jslib/abstractions/sync.service';
 import { UserService } from 'jslib/abstractions/user.service';
 
+import { ToasterService } from 'angular2-toaster';
+import { I18nService } from 'jslib/abstractions/i18n.service';
 import { BroadcasterService } from 'jslib/angular/services/broadcaster.service';
+import { AutofillService } from '../../services/abstractions/autofill.service';
 
 import { GroupingsComponent as BaseGroupingsComponent } from 'jslib/angular/components/groupings.component';
 
 import { PopupUtilsService } from '../services/popup-utils.service';
 
+const BroadcasterSubscriptionId = 'GroupingsComponent';
 const ComponentId = 'GroupingsComponent';
 const ScopeStateId = ComponentId + 'Scope';
 
@@ -59,11 +63,14 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     searchPending = false;
     searchTypeSearch = false;
     deletedCount = 0;
+    pageDetails: any[] = [];
 
     private loadedTimeout: number;
     private selectedTimeout: number;
     private preventSelected = false;
     private noFolderListSize = 100;
+    private totpCode: string;
+    private totpTimeout: number;
     private searchTimeout: any = null;
     private hasSearched = false;
     private hasLoadedAllCiphers = false;
@@ -78,7 +85,8 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         private stateService: StateService, private popupUtils: PopupUtilsService,
         private syncService: SyncService, private analytics: Angulartics2,
         private platformUtilsService: PlatformUtilsService, private searchService: SearchService,
-        private location: Location) {
+        private location: Location, private toasterService: ToasterService, private i18nService: I18nService,
+        private autofillService: AutofillService ) {
         super(collectionService, folderService, storageService, userService);
         this.noFolderListSize = 100;
     }
@@ -100,6 +108,17 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
                         window.setTimeout(() => {
                             this.load();
                         }, 500);
+                        break;
+                    case 'collectPageDetailsResponse':
+                        console.log('collectPageDetailsResponse received');
+
+                        if (message.sender === BroadcasterSubscriptionId) {
+                            this.pageDetails.push({
+                                frameId: message.webExtSender.frameId,
+                                tab: message.tab,
+                                details: message.details,
+                            });
+                        }
                         break;
                     default:
                         break;
@@ -150,6 +169,15 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     }
 
     async load() {
+        this.pageDetails = [];
+        const tab = await BrowserApi.getTabFromCurrentWindow();
+        console.log('GroupingsComponent : collect page details requested for tab', tab);
+
+        BrowserApi.tabSendMessage(tab, {
+            command: 'collectPageDetails',
+            tab: tab,
+            sender: BroadcasterSubscriptionId,
+        });
         await super.load(false);
         await this.loadCiphers();
         super.loaded = true;
@@ -174,6 +202,8 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         this.ciphersByType[CipherType.Card] = this._ciphersByType(CipherType.Card);
         this.ciphersByType[CipherType.Identity] = this._ciphersByType(CipherType.Identity);
         this.ciphersByType[CipherType.Login] = this._ciphersByType(CipherType.Login);
+        console.log('at the end of loadCiphers, ciphersByType=', this.ciphersByType);
+
 
         this.typeCounts = typeCounts;
     }
@@ -228,9 +258,10 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         }, 200);
     }
 
-    async launchCipher(cipher: CipherView) {
+    async launchCipher(cipher: CipherView): Promise<boolean> {
         if (cipher.type !== CipherType.Login || !cipher.login.canLaunch) {
-            return;
+            console.log('can not launch this cipher', cipher);
+            return false;
         }
 
         if (this.selectedTimeout != null) {
@@ -242,6 +273,50 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         BrowserApi.createNewTab(cipher.login.launchUri);
         if (this.popupUtils.inPopup(window)) {
             BrowserApi.closePopup(window);
+        }
+        return true;
+    }
+
+    async fillOrLaunchCipher(cipher: CipherView) {
+        console.log('fillOrLaunchCipher()');
+
+        if (this.pageDetails == null || this.pageDetails.length === 0) {
+            console.log('no pageDetails : can not fill tab with cipher, try to launch cipher');
+            this.launchCipher(cipher);
+            return;
+        }
+
+        // try to autofill (even if it is a Card or Identity cipher)
+        this.totpCode = null;
+        if (this.totpTimeout != null) {
+            window.clearTimeout(this.totpTimeout);
+        }
+        try {
+            this.totpCode = await this.autofillService.doAutoFill({
+                cipher         : cipher,
+                pageDetails    : this.pageDetails,
+                doc            : window.document,
+                fillNewPassword: true,
+            });
+            this.analytics.eventTrack.next({ action: 'Autofilled' });
+            if (this.totpCode != null) {
+                this.platformUtilsService.copyToClipboard(this.totpCode, { window: window });
+            }
+            if (this.popupUtils.inPopup(window)) {
+                BrowserApi.closePopup(window);
+            }
+        } catch {
+            console.log('autofill failed, try to launch');
+            const launchResult: boolean = await this.launchCipher(cipher);
+            if (!launchResult) {
+                console.log('launch failed, send error toaster');
+                this.ngZone.run(() => {
+                    this.analytics.eventTrack.next({ action: 'Autofilled Error' });
+                    this.toasterService.popAsync('error', null, this.i18nService.t('autofillError'));
+                    this.changeDetectorRef.detectChanges();
+                });
+            }
+
         }
     }
 

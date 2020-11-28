@@ -35,7 +35,7 @@
             </div>
             <div class="box-content">
                 <app-ciphers-list [ciphers]="ciphersByType[cipherType.Card]" title="{{'viewItem' | i18n}}"
-                    (onSelected)="selectCipher($event)" (onDoubleSelected)="launchCipher($event)">
+                    (onSelected)="fillOrLaunchCipher($event)" (onDoubleSelected)="launchCipher($event)" [showView]="true" (onView)="selectCipher($event)" >
                 </app-ciphers-list>
             </div>
         </div>
@@ -46,7 +46,7 @@
             </div>
             <div class="box-content">
                 <app-ciphers-list [ciphers]="ciphersByType[cipherType.Identity]" title="{{'viewItem' | i18n}}"
-                    (onSelected)="selectCipher($event)" (onDoubleSelected)="launchCipher($event)">
+                    (onSelected)="fillOrLaunchCipher($event)" (onDoubleSelected)="launchCipher($event)" [showView]="true" (onView)="selectCipher($event)">
                 </app-ciphers-list>
             </div>
         </div>
@@ -57,7 +57,7 @@
             </div>
             <div class="box-content">
                 <app-ciphers-list [ciphers]="ciphersByType[cipherType.Login]" title="{{'viewItem' | i18n}}"
-                    (onSelected)="selectCipher($event)" (onDoubleSelected)="launchCipher($event)"></app-ciphers-list>
+                    (onSelected)="fillOrLaunchCipher($event)" (onDoubleSelected)="launchCipher($event)" [showView]="true" (onView)="selectCipher($event)"></app-ciphers-list>
             </div>
         </div>
         <div class="box list" *ngIf="deletedCount">
@@ -84,8 +84,14 @@
         </div>
         <div class="box list full-list" *ngIf="ciphers && ciphers.length > 0">
             <div class="box-content">
-                <app-ciphers-list [ciphers]="ciphers" title="{{'viewItem' | i18n}}" (onSelected)="selectCipher($event)"
-                    (onDoubleSelected)="launchCipher($event)"></app-ciphers-list>
+                <app-ciphers-list
+                    [ciphers]="ciphers"
+                    title="{{'viewItem' | i18n}}"
+                    (onSelected)="fillOrLaunchCipher($event)"
+                    (onDoubleSelected)="launchCipher($event)"
+                    [showView]="true"
+                    (onView)="selectCipher($event)">
+                </app-ciphers-list>
             </div>
         </div>
     </ng-container>

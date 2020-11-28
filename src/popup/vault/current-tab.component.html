@@ -29,7 +29,7 @@
             </div>
             <div class="box-content">
                 <app-ciphers-list [ciphers]="loginCiphers" title="{{'autoFill' | i18n}}" [showView]="true"
-                    (onSelected)="fillCipher($event)" (onView)="viewCipher($event)" *ngIf="loginCiphers.length">
+                            (onSelected)="fillCipher($event)" (onView)="viewCipher($event)" *ngIf="loginCiphers.length">
                 </app-ciphers-list>
                 <div class="box-content-row padded no-hover" *ngIf="!loginCiphers.length">
                     <p class="text-center">{{'autoFillInfo' | i18n}}</p>
