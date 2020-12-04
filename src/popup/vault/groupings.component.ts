@@ -1,3 +1,4 @@
+import { ToasterService } from 'angular2-toaster';
 import { Angulartics2 } from 'angulartics2';
 
 import { Location } from '@angular/common';
@@ -24,6 +25,7 @@ import { FolderView } from 'jslib/models/view/folderView';
 import { CipherService } from 'jslib/abstractions/cipher.service';
 import { CollectionService } from 'jslib/abstractions/collection.service';
 import { FolderService } from 'jslib/abstractions/folder.service';
+import { I18nService } from 'jslib/abstractions/i18n.service';
 import { PlatformUtilsService } from 'jslib/abstractions/platformUtils.service';
 import { SearchService } from 'jslib/abstractions/search.service';
 import { StateService } from 'jslib/abstractions/state.service';
@@ -35,6 +37,7 @@ import { BroadcasterService } from 'jslib/angular/services/broadcaster.service';
 
 import { GroupingsComponent as BaseGroupingsComponent } from 'jslib/angular/components/groupings.component';
 
+import { AutofillService } from '../../services/abstractions/autofill.service';
 import { PopupUtilsService } from '../services/popup-utils.service';
 
 const ComponentId = 'GroupingsComponent';
@@ -79,6 +82,7 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     private hasLoadedAllCiphers = false;
     private allCiphers: CipherView[] = null;
     private ciphersByType: any;
+    private pageDetails: any[] = [];
 
     constructor(collectionService: CollectionService, folderService: FolderService,
         storageService: StorageService, userService: UserService,
@@ -88,7 +92,8 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         private stateService: StateService, private popupUtils: PopupUtilsService,
         private syncService: SyncService, private analytics: Angulartics2,
         private platformUtilsService: PlatformUtilsService, private searchService: SearchService,
-        private location: Location) {
+        private location: Location, private toasterService: ToasterService, private i18nService: I18nService,
+        private autofillService: AutofillService) {
         super(collectionService, folderService, storageService, userService);
         this.noFolderListSize = 100;
     }
@@ -120,16 +125,32 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
                             this.load();
                         }, 500);
                         break;
+                    case 'collectPageDetailsResponse':
+                        if (message.sender === ComponentId) {
+                            this.pageDetails.push({
+                                frameId: message.webExtSender.frameId,
+                                tab: message.tab,
+                                details: message.details,
+                            });
+                        }
+                        break;
                     default:
                         break;
                 }
-
                 this.changeDetectorRef.detectChanges();
             });
         });
 
         const restoredScopeState = await this.restoreState();
         const queryParamsSub = this.route.queryParams.subscribe(async (params) => {
+            console.log('ngOnInit : queryParamsSub', params);
+            if (params.isFilteredForPage) {
+                this.searchTagClass = 'applyuSearchTag';
+                this.searchText = '';
+                this.hasSearched = false;
+                this.displayCurrentPageCiphersMode = false;
+                this.displayCiphersListsMode = true;
+            }
             this.state = (await this.stateService.get<any>(ComponentId)) || {};
             if (this.state.searchText) {
                 this.searchText = this.state.searchText;
@@ -169,8 +190,16 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     }
 
     async load() {
-        console.log('load()');
-
+        console.log('load()', this.route.data);
+        // request page detail from current tab
+        const tab = await BrowserApi.getTabFromCurrentWindow();
+        this.pageDetails = [];
+        BrowserApi.tabSendMessage(tab, {
+            command: 'collectPageDetails',
+            tab: tab,
+            sender: ComponentId,
+        });
+        // rest of loading
         await super.load(false);
         await this.loadCiphers();
         if (this.showNoFolderCiphers && this.nestedFolders.length > 0) {
@@ -304,7 +333,7 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     }
 
     switchToCiphersListsMode() {
-        console.log('switchToCiphersListsMode()');
+        // console.log('switchToCiphersListsMode()');
         this.searchTagClass = 'hideSearchTag';
         this.searchText = '';
         this.hasSearched = false;
@@ -313,12 +342,10 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
     }
 
     async getCiphersForCurrentPage(): Promise<any[]> {
-        console.log('getCiphersForCurrentPage()');
+        // console.log('getCiphersForCurrentPage()');
         const tab = await BrowserApi.getTabFromCurrentWindow();
-        console.log(tab);
         if (tab == null) { return []; }
         let ciphersForCurrentPage = await this.cipherService.getAllDecryptedForUrl(tab.url, null);
-        console.log(ciphersForCurrentPage);
         ciphersForCurrentPage = ciphersForCurrentPage.sort((a, b): number => {
             return this.cipherService.sortCiphersByLastUsedThenName(a, b);
         });
@@ -382,6 +409,38 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
         return this.hasSearched || (!this.searchPending && this.searchService.isSearchable(this.searchText));
     }
 
+    async fillCipher(cipher: CipherView) {
+        let totpCode = null;
+
+        if (this.pageDetails == null || this.pageDetails.length === 0) {
+            this.analytics.eventTrack.next({ action: 'Autofilled Error' });
+            this.toasterService.popAsync('error', null, this.i18nService.t('autofillError'));
+            return;
+        }
+
+        try {
+            totpCode = await this.autofillService.doAutoFill({
+                cipher: cipher,
+                pageDetails: this.pageDetails,
+                doc: window.document,
+                fillNewPassword: true,
+            });
+            this.analytics.eventTrack.next({ action: 'Autofilled' });
+            if (totpCode != null) {
+                this.platformUtilsService.copyToClipboard(totpCode, { window: window });
+            }
+            if (this.popupUtils.inPopup(window)) {
+                BrowserApi.closePopup(window);
+            }
+        } catch (e) {
+            this.ngZone.run(() => {
+                this.analytics.eventTrack.next({ action: 'Autofilled Error' });
+                this.toasterService.popAsync('error', null, this.i18nService.t('autofillError'));
+                this.changeDetectorRef.detectChanges();
+            });
+        }
+    }
+
     private async saveState() {
         this.state = {
             scrollY: this.popupUtils.getContentScrollY(window),
@@ -419,4 +478,9 @@ export class GroupingsComponent extends BaseGroupingsComponent implements OnInit
 
         return true;
     }
+
+    private viewCipher(cipher: CipherView) {
+        this.router.navigate(['/view-cipher'], { queryParams: { cipherId: cipher.id } });
+    }
+
 }
