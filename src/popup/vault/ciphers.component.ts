@@ -1,9 +1,11 @@
+import { ToasterService } from 'angular2-toaster';
 import { Angulartics2 } from 'angulartics2';
 
 import { Location } from '@angular/common';
 import {
     ChangeDetectorRef,
     Component,
+    HostListener,
     NgZone,
     OnDestroy,
     OnInit,
@@ -22,8 +24,10 @@ import { I18nService } from 'jslib/abstractions/i18n.service';
 import { PlatformUtilsService } from 'jslib/abstractions/platformUtils.service';
 import { SearchService } from 'jslib/abstractions/search.service';
 import { StateService } from 'jslib/abstractions/state.service';
+import { StorageService } from 'jslib/abstractions/storage.service';
 
 import { CipherType } from 'jslib/enums/cipherType';
+import { UriMatchType } from 'jslib/enums/uriMatchType';
 
 import { CipherView } from 'jslib/models/view/cipherView';
 import { CollectionView } from 'jslib/models/view/collectionView';
@@ -35,6 +39,9 @@ import { BroadcasterService } from 'jslib/angular/services/broadcaster.service';
 
 import { CiphersComponent as BaseCiphersComponent } from 'jslib/angular/components/ciphers.component';
 
+import { AutofillService } from '../../services/abstractions/autofill.service';
+import { LocalConstantsService as ConstantsService } from '../services/constants.service';
+import { KonnectorsService } from '../services/konnectors.service';
 import { PopupUtilsService } from '../services/popup-utils.service';
 
 const ComponentId = 'CiphersComponent';
@@ -56,6 +63,7 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
     private selectedTimeout: number;
     private preventSelected = false;
     private applySavedState = true;
+    private pageDetails: any[] = [];
 
     constructor(searchService: SearchService, private route: ActivatedRoute,
         private router: Router, private location: Location,
@@ -64,11 +72,21 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
         private popupUtils: PopupUtilsService, private i18nService: I18nService,
         private folderService: FolderService, private collectionService: CollectionService,
         private analytics: Angulartics2, private platformUtilsService: PlatformUtilsService,
-        private cipherService: CipherService) {
+        private cipherService: CipherService, private storageService: StorageService,
+        private konnectorsService: KonnectorsService, private toasterService: ToasterService,
+        private autofillService: AutofillService) {
         super(searchService);
         this.pageSize = 100;
         this.applySavedState = (window as any).previousPopupUrl != null &&
             !(window as any).previousPopupUrl.startsWith('/ciphers');
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    handleKeyDown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+            this.back();
+            event.preventDefault();
+        }
     }
 
     async ngOnInit() {
@@ -153,12 +171,30 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
                             }, 500);
                         }
                         break;
+                    case 'collectPageDetailsResponse':
+                        if (message.sender === ComponentId) {
+                            this.pageDetails.push({
+                                frameId: message.webExtSender.frameId,
+                                tab: message.tab,
+                                details: message.details,
+                            });
+                        }
+                        break;
                     default:
                         break;
                 }
 
                 this.changeDetectorRef.detectChanges();
             });
+        });
+
+        // request page detail from current tab
+        const tab = await BrowserApi.getTabFromCurrentWindow();
+        this.pageDetails = [];
+        BrowserApi.tabSendMessage(tab, {
+            command: 'collectPageDetails',
+            tab: tab,
+            sender: ComponentId,
         });
     }
 
@@ -204,6 +240,56 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
         }
     }
 
+    async fillOrLaunchCipher(cipher: CipherView) {
+        console.log('fillOrLaunchCipher()');
+
+        // Get default matching setting for urls
+        let defaultMatch = await this.storageService.get<UriMatchType>(ConstantsService.defaultUriMatch);
+        if (defaultMatch == null) {
+            defaultMatch = UriMatchType.Domain;
+        }
+        // Get the current url
+        const tab = await BrowserApi.getTabFromCurrentWindow();
+        const isCipherMatcinghUrl = await this.konnectorsService.hasURLMatchingCiphers(tab.url, [cipher], defaultMatch);
+        if (isCipherMatcinghUrl) {
+            this.fillCipher(cipher);
+        } else {
+            this.launchCipher(cipher);
+        }
+    }
+
+    async fillCipher(cipher: CipherView) {
+        let totpCode = null;
+
+        if (this.pageDetails == null || this.pageDetails.length === 0) {
+            this.analytics.eventTrack.next({ action: 'Autofilled Error' });
+            this.toasterService.popAsync('error', null, this.i18nService.t('autofillError'));
+            return;
+        }
+
+        try {
+            totpCode = await this.autofillService.doAutoFill({
+                cipher: cipher,
+                pageDetails: this.pageDetails,
+                doc: window.document,
+                fillNewPassword: true,
+            });
+            this.analytics.eventTrack.next({ action: 'Autofilled' });
+            if (totpCode != null) {
+                this.platformUtilsService.copyToClipboard(totpCode, { window: window });
+            }
+            if (this.popupUtils.inPopup(window)) {
+                BrowserApi.closePopup(window);
+            }
+        } catch (e) {
+            this.ngZone.run(() => {
+                this.analytics.eventTrack.next({ action: 'Autofilled Error' });
+                this.toasterService.popAsync('error', null, this.i18nService.t('autofillError'));
+                this.changeDetectorRef.detectChanges();
+            });
+        }
+    }
+
     addCipher() {
         if (this.deleted) {
             return false;
@@ -233,6 +319,10 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
         this.searchText = '';
     }
 
+    viewCipher(cipher: CipherView) {
+        this.router.navigate(['/view-cipher'], { queryParams: { cipherId: cipher.id } });
+    }
+
     private async saveState() {
         this.state = {
             scrollY: this.popupUtils.getContentScrollY(window),
@@ -240,4 +330,5 @@ export class CiphersComponent extends BaseCiphersComponent implements OnInit, On
         };
         await this.stateService.save(ComponentId, this.state);
     }
+
 }
