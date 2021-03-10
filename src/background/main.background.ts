@@ -66,6 +66,7 @@ import { Utils } from 'jslib/misc/utils';
 
 import { CozyClientService } from '../popup/services/cozyClient.service';
 import { KonnectorsService } from '../popup/services/konnectors.service';
+import { PopupUtilsService } from '../popup/services/popup-utils.service';
 
 import { BrowserApi } from '../browser/browserApi';
 import { SafariApp } from '../browser/safariApp';
@@ -83,7 +84,6 @@ import BrowserMessagingService from '../services/browserMessaging.service';
 import BrowserPlatformUtilsService from '../services/browserPlatformUtils.service';
 import BrowserStorageService from '../services/browserStorage.service';
 import I18nService from '../services/i18n.service';
-import { PopupUtilsService } from '../popup/services/popup-utils.service';
 
 import { AutofillService as AutofillServiceAbstraction } from '../services/abstractions/autofill.service';
 
@@ -112,7 +112,6 @@ export default class MainBackground {
     autofillService: AutofillServiceAbstraction;
     containerService: ContainerService;
     auditService: AuditServiceAbstraction;
-    // authService: AuthServiceAbstraction;
     authService: AuthService;
     exportService: ExportServiceAbstraction;
     searchService: SearchServiceAbstraction;
@@ -166,11 +165,8 @@ export default class MainBackground {
             (expired: boolean) => this.logout(expired));
         this.userService = new UserService(this.tokenService, this.storageService);
         this.environmentService = new EnvironmentService(this.apiService, this.storageService,
-            this.notificationsService); // this declaration has been moved up for the cozyClientService declaration
+            this.notificationsService);
         this.cozyClientService = new CozyClientService(this.environmentService, this.apiService);
-        // this.authService = new AuthService(this.cryptoService, this.apiService, this.userService,
-        //     this.tokenService, this.appIdService, this.i18nService, this.platformUtilsService,
-        //     this.messagingService, this.vaultTimeoutService);
         this.authService = new AuthService(this.cryptoService, this.apiService, this.userService,
             this.tokenService, this.appIdService, this.i18nService, this.platformUtilsService,
             this.messagingService, this.vaultTimeoutService,
@@ -272,8 +268,6 @@ export default class MainBackground {
         this.exportService = new ExportService(this.folderService, this.cipherService, this.apiService);
         this.notificationsService = new NotificationsService(this.userService, this.syncService, this.appIdService,
             this.apiService, this.vaultTimeoutService, () => this.logout(true));
-        // this.environmentService = new EnvironmentService(this.apiService, this.storageService,
-        //     this.notificationsService); // this declaration has been moved up for the cozyClientService declaration
         this.analytics = new Analytics(window, () => BrowserApi.gaFilter(), this.platformUtilsService,
             this.storageService, this.appIdService);
         this.popupUtilsService = new PopupUtilsService(this.platformUtilsService);
