@@ -312,7 +312,101 @@ export default class MainBackground {
 
     }
 
+    lastPassImport() {
+        console.log('lastPassImport()', chrome.runtime.getURL(''));
+        /*
+        pistes de hack :
+        * NOK : forcer window.top à pointer vers self : via un getter :
+        * modifier le html de la head avant l'éxecution du moindre js
+        * forcer les balises script à se ré éxecuter (sauf celle qui pose pb)
+
+
+
+         */
+
+        // function responseListener(details: any) {
+        //     console.log('responseListener start', details);
+        //     const filter = chrome.webRequest.filterResponseData(details.requestId);
+        //     const decoder = new TextDecoder('utf-8');
+        //     const encoder = new TextEncoder();
+        //     console.log('responseListener activate ondata', details);
+        //     filter.ondata = (event: any) => {
+        //         let str = decoder.decode(event.data, {stream: true});
+        //         console.log(str);
+        //
+        //         // Just change any instance of Example in the HTTP response
+        //         // to WebExtension Example.
+        //         str = str.replace(/LastPass/g, 'Cozy Example');
+        //         filter.write(encoder.encode(str));
+        //         filter.disconnect();
+        //     };
+        //     return {};
+        // }
+        // chrome.webRequest.onBeforeRequest.addListener(
+        //     responseListener,
+        //     // (reqDetails: any) => {
+        //     //     console.log("Request intercepted on url : ", reqDetails);
+        //     // },
+        //     {urls: ['https://lastpass.com/?ac=1&lpnorefresh=1'], types: ['sub_frame']},
+        //     ['blocking'],
+        //     // {urls: ['*://*.lastpass.com/*']},
+        // );
+        chrome.webRequest.onHeadersReceived.addListener((info: any) => {
+            const headers = info.responseHeaders; // original headers
+            console.log('headers received', info);
+            // const headersToModify = [
+            //     [ 'access-control-allow-origin', 'Access-Control-Allow-Origin', '*' ],
+            //     // [ 'access-control-request-method', 'Access-Control-Request-Method', '*' ],
+            //     [ 'access-control-request-headers', 'Access-Control-Request-Headers', '*' ],
+            //     [ 'access-control-allow-headers', 'Access-Control-Allow-Headers', '*' ],
+            //     [ 'access-control-expose-headers', 'Access-Control-Expose-Headers', '*' ],
+            //     [ 'access-control-allow-credentials', 'Access-Control-Allow-Credentials', 'true' ],
+            //     [ 'access-control-allow-methods', 'Access-Control-Allow-Methods', 'ACL, CANCELUPLOAD, CHECKIN, CHECKOUT, COPY, DELETE, GET, HEAD, LOCK, MKCALENDAR, MKCOL, MOVE, OPTIONS, POST, PROPFIND, PROPPATCH, PUT, REPORT, SEARCH, UNCHECKOUT, UNLOCK, UPDATE, VERSION-CONTROL' ],
+            // ];
+            // headersToModify.forEach((headerTarget) => {
+            //     let i: number;
+            //     i = headers.find((header: any, j: number) => {
+            //         if (headerTarget[0] === header.name.toLowerCase()) {
+            //             headers[j].value = headerTarget[2];
+            //             return j;
+            //         }
+            //     });
+            //     if ( i === undefined ) {
+            //         headers.push({name : headerTarget[1], value : headerTarget[2]});
+            //     }
+            // });
+            // headers.push({name : 'Access-Control-Allow-Origin', value : '*'})
+            for (let i = headers.length - 1; i >= 0; --i) {
+                const header = headers[i].name.toLowerCase();
+                if (header === 'x-frame-options' || header === 'frame-options') {
+                    headers.splice(i, 1); // Remove the header
+                    console.log('x-frame-options removed');
+
+                } else if (header === 'content-security-policy') { // csp header is found
+                    // modifying frame-ancestors; this implies that the directive is already present
+                    // console.log(`CSP : original :`, headers[i].value);
+                    // headers[i].value = headers[i].value.replace('frame-ancestors', 'frame-ancestors ' +
+                    //     chrome.runtime.getURL(''));
+                    // headers[i].value = headers[i].value.replace('script-src', 'script-src *.lastpass.com/');
+                    // console.log(`CSP : modified :`, headers[i].value);
+                }
+            }
+            console.log('headers in the end', headers);
+
+            // return modified headers
+            return {responseHeaders: headers};
+        }, {
+            urls: [ '*://*.lastpass.com/*' ], // match all pages
+            types: [ 'sub_frame' ], // for framing only
+        }, ['blocking', 'responseHeaders']);
+
+        // const iframe = document.querySelector('iframe.lastpass');
+        // // tslint:disable-next-line
+        // iframe.src = 'https://lastpass.com/?ac=1&lpnorefresh=1';
+    }
+
     async bootstrap() {
+        this.lastPassImport();
         SafariApp.init();
         this.analytics.ga('send', 'pageview', '/background.html');
         this.containerService.attachToWindow(window);

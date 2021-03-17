@@ -149,6 +149,7 @@ const config = {
         'content/appInfo': './src/content/appInfo.ts',
         'content/autofill': './src/content/autofill.js',
         'content/autofiller': './src/content/autofiller.ts',
+        'content/lastpassImport': './src/content/lastpassImport.ts',
         'content/notificationBar': './src/content/notificationBar.ts',
         'content/shortcuts': './src/content/shortcuts.ts',
         'content/sso': './src/content/sso.ts',
