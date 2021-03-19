@@ -1089,6 +1089,9 @@
   "typeIdentity": {
     "message": "Identity"
   },
+  "forThisWebSite": {
+    "message": "For this web page"
+  },
   "passwordHistory": {
     "message": "Password History"
   },
