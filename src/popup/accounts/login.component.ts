@@ -206,6 +206,11 @@ export class LoginComponent implements OnInit {
             active: true,
             url: getPassphraseResetURL(this.cozyUrl)
         })
-        window.close()
+
+        // Close popup
+        const popupWindows = browser.extension.getViews({ type: "popup" });
+        if (popupWindows.find((w: Window) => w === window)) {
+          window.close()
+        }
     }
 }
