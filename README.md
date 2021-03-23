@@ -25,7 +25,7 @@ The Cozy browser extension is written using the Web Extension API and Angular. I
 
 ```
 npm install
-npm run build:watch
+npm run start
 ```
 
 You can now load the extension into your browser through the browser's extension tools page:
