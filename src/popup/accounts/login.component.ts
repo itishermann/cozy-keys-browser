@@ -201,6 +201,7 @@ export class LoginComponent implements OnInit {
             return
         }
 
+        const browser = window.browser || window.chrome
         await browser.tabs.create({
             active: true,
             url: getPassphraseResetURL(this.cozyUrl)
