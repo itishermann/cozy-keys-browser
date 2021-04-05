@@ -41,7 +41,7 @@ import {
     EnvironmentService as EnvironmentServiceAbstraction,
     FolderService as FolderServiceAbstraction,
     I18nService as I18nServiceAbstraction,
-    MessagingService as MessagingServiceAbstraction,
+    // MessagingService as MessagingServiceAbstraction,
     PasswordGenerationService as PasswordGenerationServiceAbstraction,
     PlatformUtilsService as PlatformUtilsServiceAbstraction,
     SettingsService as SettingsServiceAbstraction,
@@ -86,6 +86,7 @@ import BrowserStorageService from '../services/browserStorage.service';
 import I18nService from '../services/i18n.service';
 
 import { AutofillService as AutofillServiceAbstraction } from '../services/abstractions/autofill.service';
+import { MessagingService as MessagingServiceAbstraction } from '../services/abstractions/messaging.service';
 
 export default class MainBackground {
     messagingService: MessagingServiceAbstraction;
@@ -309,6 +310,7 @@ export default class MainBackground {
             this.analytics, this.notificationsService, this.systemService, this.vaultTimeoutService,
             this.environmentService,
             this.konnectorsService, this.syncService, this.authService, this.cryptoService, this.userService);
+        this.messagingService.setRuntimeBackground(this.runtimeBackground);
 
     }
 
